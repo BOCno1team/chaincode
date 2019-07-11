@@ -21,45 +21,69 @@ type Chaincode struct {
 
 //需求方
 type demand struct {
-	ObjectType   string `json:"docType"`
-	DemandID     int    `json:"demandID"`
-	Name         string `json:"name"`
-	Category     string `json:"category"`
-	AmountNeeded int    `json:"amountNeeded"`
-	Unit         string `json:"unit"`
-	Priority     int    `json:"priority"`
-	DemanderID   int    `json:"demanderID"`
+	ObjectType   string  `json:"docType"`
+	DemandID     int     `json:"demandID"`
+	Name         string  `json:"name"`
+	Category     string  `json:"category"`
+	AmountNeeded int     `json:"amountNeeded"`
+	Unit         string  `json:"unit"`
+	Priority     int     `json:"priority"`
+	DemanderID   int     `json:"demanderID"`
+	Lat          float64 `json:"lat"`
+	Lon          float64 `json:"lon"`
 }
 
 //供应方有费池
 type profitablesupply struct {
-	ObjectType string `json:"docType"`
-	SupplyID   int    `json:"supplyID"`
-	Name       string `json:"name"`
-	Amount     int    `json:"amount"`
-	Unit       string `json:"unit"`
-	ProviderID int    `json:"providerID"`
-	UnitPrice  int    `json:"unitprice"`
+	ObjectType   string  `json:"docType"`
+	SupplyID     int     `json:"supplyID"`
+	Name         string  `json:"name"`
+	Amount       int     `json:"amount"`
+	Unit         string  `json:"unit"`
+	ProviderID   int     `json:"providerID"`
+	UnitPrice    float64 `json:"unitprice"`
+	ProviderRank int     `json: "providerRank"`
+	Lat          float64 `json:"lat"`
+	Lon          float64 `json:"lon"`
+	CoverRadius  float64 `json:"coverRadius"`
 }
 
 //供应方无费池
 type unprofitablesupply struct {
-	ObjectType string  `json:"docType"`
-	SupplyID   int     `json:"supplyID"`
-	Name       string  `json:"name"`
-	Amount     float64 `json:"amount"`
-	Unit       string  `json:"unit"`
-	ProviderID int     `json:"providerID"`
+	ObjectType   string  `json:"docType"`
+	SupplyID     int     `json:"supplyID"`
+	Name         string  `json:"name"`
+	Amount       float64 `json:"amount"`
+	Unit         string  `json:"unit"`
+	ProviderID   int     `json:"providerID"`
+	ProviderRank int     `json: "providerRank"`
+	Lat          float64 `json:"lat"`
+	Lon          float64 `json:"lon"`
+	CoverRadius  float64 `json:"coverRadius"`
 }
 
 //供应方
 type organization struct {
-	ObjectType string `json:"docType"`
-	OrgID      int    `json:"orgID"`
-	Name       string `json:"name"`
-	Score      int    `json:"score"`
-	Rank       int    `json:"rank"`
-	OrgType    string `json:"orgType"`
+	ObjectType string  `json:"docType"`
+	OrgID      int     `json:"orgID"`
+	Name       string  `json:"name"`
+	Score      int     `json:"score"`
+	Rank       int     `json:"rank"`
+	OrgType    string  `json:"orgType"`
+	defaultLat float64 `json:"defaultLat:`
+	defaultLon float64 `json:"defaultLon:`
+}
+
+type provider struct {
+	ObjectType         string  `json:"docType"`
+	OrgID              int     `json:"orgID"`
+	Name               string  `json:"name"`
+	Score              int     `json:"score"`
+	Rank               int     `json:"rank"`
+	OrgType            string  `json:"orgType"`
+	defaultLat         float64 `json:"defaultLat:`
+	defaultLon         float64 `json:"defaultLon:`
+	defaultCoverRadius float64 `json:"defaultCoverRadius"`
 }
 
 // Init is called when the chaincode is instantiated by the blockchain network.
@@ -79,6 +103,8 @@ func (cc *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return cc.initUnprofitablesupply(stub, args)
 	} else if fcn == "initOrganization" {
 		return cc.initOrganization(stub, args)
+	} else if fcn == "initProvider" {
+		return cc.initProvider(stub, args)
 	} else if fcn == "queryByKey" {
 		return cc.queryByKey(stub, args)
 	} else if fcn == "queryProByName" {
@@ -107,7 +133,7 @@ func (cc *Chaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 
 //创建需求方信息，7个参数
 func (cc *Chaincode) initDemand(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 7 {
+	if len(args) != 9 {
 		return shim.Error("not enough args")
 	}
 	demandID, _ := strconv.Atoi(args[0])
@@ -117,6 +143,9 @@ func (cc *Chaincode) initDemand(stub shim.ChaincodeStubInterface, args []string)
 	unit := strings.ToLower(args[4])
 	priority, _ := strconv.Atoi(args[5])
 	demanderID, _ := strconv.Atoi(args[6])
+	lat, _ := strconv.ParseFloat(args[7], 64)
+	lon, _ := strconv.ParseFloat(args[8], 64)
+
 	// ==== Check if demand already exists ====
 	demandAsBytes, err := stub.GetState(strconv.Itoa(demandID))
 	if err != nil {
@@ -127,7 +156,7 @@ func (cc *Chaincode) initDemand(stub shim.ChaincodeStubInterface, args []string)
 	}
 	// ==== Create demond object and marshal to JSON ====
 	objectType := "demand"
-	demand := &demand{objectType, demandID, name, category, amountNeeded, unit, priority, demanderID}
+	demand := &demand{objectType, demandID, name, category, amountNeeded, unit, priority, demanderID, lat, lon}
 	demandJSONasBytes, err := json.Marshal(demand)
 	if err != nil {
 		return shim.Error(err.Error())
@@ -144,7 +173,7 @@ func (cc *Chaincode) initDemand(stub shim.ChaincodeStubInterface, args []string)
 
 //创建供应方有费池信息，6个参数
 func (cc *Chaincode) initProfitablesupply(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 6 {
+	if len(args) != 10 {
 		return shim.Error("not enough args")
 	}
 	supplyID, _ := strconv.Atoi(args[0])
@@ -152,7 +181,11 @@ func (cc *Chaincode) initProfitablesupply(stub shim.ChaincodeStubInterface, args
 	amount, _ := strconv.Atoi(args[2])
 	unit := strings.ToLower(args[3])
 	providerID, _ := strconv.Atoi(args[4])
-	unitPrice, _ := strconv.Atoi(args[5])
+	unitPrice, _ := strconv.ParseFloat(args[5], 64)
+	providerRank, _ := strconv.Atoi(args[6])
+	lat, _ := strconv.ParseFloat(args[7], 64)
+	lon, _ := strconv.ParseFloat(args[8], 64)
+	coverRadius, _ := strconv.ParseFloat(args[9], 64)
 	// ==== Check if profitablesupply already exists ====
 	profitablesupplyAsBytes, err := stub.GetState(strconv.Itoa(supplyID))
 	if err != nil {
@@ -163,7 +196,7 @@ func (cc *Chaincode) initProfitablesupply(stub shim.ChaincodeStubInterface, args
 	}
 	// ==== Create demond object and marshal to JSON ====
 	docType := "profitablesupply"
-	profitablesupply := &profitablesupply{docType, supplyID, name, amount, unit, providerID, unitPrice}
+	profitablesupply := &profitablesupply{docType, supplyID, name, amount, unit, providerID, unitPrice, providerRank, lat, lon, coverRadius}
 	profitablesupplyJSONasBytes, err := json.Marshal(profitablesupply)
 	if err != nil {
 		return shim.Error(err.Error())
@@ -199,7 +232,7 @@ func (cc *Chaincode) initProfitablesupply(stub shim.ChaincodeStubInterface, args
 
 //创建供应方无费池信息，5个参数
 func (cc *Chaincode) initUnprofitablesupply(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 5 {
+	if len(args) != 9 {
 		return shim.Error("not enough args")
 	}
 	supplyID, _ := strconv.Atoi(args[0])
@@ -207,6 +240,10 @@ func (cc *Chaincode) initUnprofitablesupply(stub shim.ChaincodeStubInterface, ar
 	amount, _ := strconv.ParseFloat(args[2], 64)
 	unit := strings.ToLower(args[3])
 	providerID, _ := strconv.Atoi(args[4])
+	providerRank, _ := strconv.Atoi(args[5])
+	lat, _ := strconv.ParseFloat(args[6], 64)
+	lon, _ := strconv.ParseFloat(args[7], 64)
+	coverRadius, _ := strconv.ParseFloat(args[8], 64)
 	// ==== Check if unprofitablesupply already exists ====
 	unprofitablesupplyAsBytes, err := stub.GetState(strconv.Itoa(supplyID))
 	if err != nil {
@@ -217,7 +254,7 @@ func (cc *Chaincode) initUnprofitablesupply(stub shim.ChaincodeStubInterface, ar
 	}
 	// ==== Create demond object and marshal to JSON ====
 	objectType := "unprofitablesupply"
-	unprofitablesupply := &unprofitablesupply{objectType, supplyID, name, amount, unit, providerID}
+	unprofitablesupply := &unprofitablesupply{objectType, supplyID, name, amount, unit, providerID, providerRank, lat, lon, coverRadius}
 	unprofitablesupplyJSONasBytes, err := json.Marshal(unprofitablesupply)
 	if err != nil {
 		return shim.Error(err.Error())
@@ -253,7 +290,7 @@ func (cc *Chaincode) initUnprofitablesupply(stub shim.ChaincodeStubInterface, ar
 
 //创建供应方
 func (cc *Chaincode) initOrganization(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 5 {
+	if len(args) != 7 {
 		return shim.Error("not enough args")
 	}
 	orgID, _ := strconv.Atoi(args[0])
@@ -261,6 +298,9 @@ func (cc *Chaincode) initOrganization(stub shim.ChaincodeStubInterface, args []s
 	score, _ := strconv.Atoi(args[2])
 	rank, _ := strconv.Atoi(args[3])
 	orgType := strings.ToLower(args[4])
+	defaultLat, _ := strconv.ParseFloat(args[5], 64)
+	defaultLon, _ := strconv.ParseFloat(args[6], 64)
+
 	// ==== Check if unprofitablesupply already exists ====
 	organizationAsBytes, err := stub.GetState(strconv.Itoa(orgID))
 	if err != nil {
@@ -278,6 +318,46 @@ func (cc *Chaincode) initOrganization(stub shim.ChaincodeStubInterface, args []s
 	}
 	// === Save demand to state ===
 	err = stub.PutState(strconv.Itoa(orgID), organizationJSONasBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	// ==== Marble saved and indexed. Return success ====
+	fmt.Println("- end init organization")
+	return shim.Success(nil)
+}
+
+func (cc *Chaincode) initProvider(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 8 {
+		return shim.Error("not enough args")
+	}
+	orgID, _ := strconv.Atoi(args[0])
+	name := strings.ToLower(args[1])
+	score, _ := strconv.Atoi(args[2])
+	rank, _ := strconv.Atoi(args[3])
+	orgType := strings.ToLower(args[4])
+	defaultLat, _ := strconv.ParseFloat(args[5], 64)
+	defaultLon, _ := strconv.ParseFloat(args[6], 64)
+	defaultCoverRadius, _ := strconv.ParseFloat(args[7], 64)
+
+	// ==== Check if unprofitablesupply already exists ====
+	providerAsBytes, err := stub.GetState(strconv.Itoa(orgID))
+	if err != nil {
+		return shim.Error("Failed to get provider: " + err.Error())
+	} else if providerAsBytes != nil {
+		fmt.Println("This provider already exists: " + strconv.Itoa(orgID))
+		return shim.Error("This provider already exists: " + strconv.Itoa(orgID))
+	}
+
+	// ==== Create demond object and marshal to JSON ====
+	objectType := "provider"
+	provider := &provider{objectType, orgID, name, score, rank, orgType, defaultLat, defaultLon, defaultCovderRadius}
+	providerJSONasBytes, err := json.Marshal(provider)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	// === Save demand to state ===
+	err = stub.PutState(strconv.Itoa(orgID), providerJSONasBytes)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
