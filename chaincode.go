@@ -42,7 +42,7 @@ type profitablesupply struct {
 	Unit         string  `json:"unit"`
 	ProviderID   int     `json:"providerID"`
 	UnitPrice    float64 `json:"unitprice"`
-	ProviderRank int     `json: "providerRank"`
+	ProviderRank int     `json:"providerRank"`
 	Lat          float64 `json:"lat"`
 	Lon          float64 `json:"lon"`
 	CoverRadius  float64 `json:"coverRadius"`
@@ -56,7 +56,7 @@ type unprofitablesupply struct {
 	Amount       float64 `json:"amount"`
 	Unit         string  `json:"unit"`
 	ProviderID   int     `json:"providerID"`
-	ProviderRank int     `json: "providerRank"`
+	ProviderRank int     `json:"providerRank"`
 	Lat          float64 `json:"lat"`
 	Lon          float64 `json:"lon"`
 	CoverRadius  float64 `json:"coverRadius"`
@@ -70,8 +70,8 @@ type organization struct {
 	Score      int     `json:"score"`
 	Rank       int     `json:"rank"`
 	OrgType    string  `json:"orgType"`
-	defaultLat float64 `json:"defaultLat:`
-	defaultLon float64 `json:"defaultLon:`
+	DefaultLat float64 `json:"defaultLat"`
+	DefaultLon float64 `json:"defaultLon"`
 }
 
 type provider struct {
@@ -81,9 +81,9 @@ type provider struct {
 	Score              int     `json:"score"`
 	Rank               int     `json:"rank"`
 	OrgType            string  `json:"orgType"`
-	defaultLat         float64 `json:"defaultLat"`
-	defaultLon         float64 `json:"defaultLon"`
-	defaultCoverRadius float64 `json:"defaultCoverRadius"`
+	DefaultLat         float64 `json:"defaultLat"`
+	DefaultLon         float64 `json:"defaultLon"`
+	DefaultCoverRadius float64 `json:"defaultCoverRadius"`
 }
 
 // Init is called when the chaincode is instantiated by the blockchain network.
