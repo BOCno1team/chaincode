@@ -81,8 +81,8 @@ type provider struct {
 	Score              int     `json:"score"`
 	Rank               int     `json:"rank"`
 	OrgType            string  `json:"orgType"`
-	defaultLat         float64 `json:"defaultLat:`
-	defaultLon         float64 `json:"defaultLon:`
+	defaultLat         float64 `json:"defaultLat"`
+	defaultLon         float64 `json:"defaultLon"`
 	defaultCoverRadius float64 `json:"defaultCoverRadius"`
 }
 
@@ -311,7 +311,7 @@ func (cc *Chaincode) initOrganization(stub shim.ChaincodeStubInterface, args []s
 	}
 	// ==== Create demond object and marshal to JSON ====
 	objectType := "organization"
-	organization := &organization{objectType, orgID, name, score, rank, orgType}
+	organization := &organization{objectType, orgID, name, score, rank, orgType, defaultLat, defaultLon}
 	organizationJSONasBytes, err := json.Marshal(organization)
 	if err != nil {
 		return shim.Error(err.Error())
@@ -351,7 +351,7 @@ func (cc *Chaincode) initProvider(stub shim.ChaincodeStubInterface, args []strin
 
 	// ==== Create demond object and marshal to JSON ====
 	objectType := "provider"
-	provider := &provider{objectType, orgID, name, score, rank, orgType, defaultLat, defaultLon, defaultCovderRadius}
+	provider := &provider{objectType, orgID, name, score, rank, orgType, defaultLat, defaultLon, defaultCoverRadius}
 	providerJSONasBytes, err := json.Marshal(provider)
 	if err != nil {
 		return shim.Error(err.Error())
